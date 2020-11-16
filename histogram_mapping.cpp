@@ -23,118 +23,118 @@ int main(void)
 	hwnd = GetForegroundWindow();
 	hdc = GetWindowDC(hwnd);
 
-	int width = 512;	// ÀÌ¹ÌÁö ÆÄÀÏÀÇ °¡·Î ±æÀÌ
-	int height = 512;	// ÀÌ¹ÌÁö ÆÄÀÏÀÇ ¼¼·Î ±æÀÌ
+	int width = 512;	// ì´ë¯¸ì§€ íŒŒì¼ì˜ ê°€ë¡œ ê¸¸ì´
+	int height = 512;	// ì´ë¯¸ì§€ íŒŒì¼ì˜ ì„¸ë¡œ ê¸¸ì´
 
-	float Image1_Histogram[256] = { 0, };  // ÀÌ¹ÌÁö1ÀÇ È÷½ºÅä±×·¥
-	float Image2_Histogram[256] = { 0, };  // ÀÌ¹ÌÁö2ÀÇ È÷½ºÅä±×·¥
-	float Image_mapping_Histogram[256] = { 0, }; // histogram mappingÀ» ÇÑ È÷½ºÅä±×·¥
+	float Image1_Histogram[256] = { 0, };  // ì´ë¯¸ì§€1ì˜ íˆìŠ¤í† ê·¸ë¨
+	float Image2_Histogram[256] = { 0, };  // ì´ë¯¸ì§€2ì˜ íˆìŠ¤í† ê·¸ë¨
+	float Image_mapping_Histogram[256] = { 0, }; // histogram mappingì„ í•œ íˆìŠ¤í† ê·¸ë¨
 
-	float Image1_CDF[256] = { 0, };		   // ÀÌ¹ÌÁö1ÀÇ CDF
-	float Image2_CDF[256] = { 0, };		   // ÀÌ¹ÌÁö2ÀÇ CDF
-	float Image_mapping_CDF[256] = { 0, }; // histogram mappingÀ» ÇÑ CDF
+	float Image1_CDF[256] = { 0, };		   // ì´ë¯¸ì§€1ì˜ CDF
+	float Image2_CDF[256] = { 0, };		   // ì´ë¯¸ì§€2ì˜ CDF
+	float Image_mapping_CDF[256] = { 0, }; // histogram mappingì„ í•œ CDF
 
-	FILE* Input1_file = fopen("barbara.raw", "rb");	// Input ÀÌ¹ÌÁö1
-	FILE* Input2_file = fopen("Couple.raw", "rb");	// Input ÀÌ¹ÌÁö2
-	FILE* Output_file = fopen("output.raw", "wb");		  // histogram mappingÇÑ Ãâ·Â ÀÌ¹ÌÁö
+	FILE* Input1_file = fopen("input1.raw", "rb");	// Input ì´ë¯¸ì§€1
+	FILE* Input2_file = fopen("input2.raw", "rb");	// Input ì´ë¯¸ì§€2
+	FILE* Output_file = fopen("output.raw", "wb");		  // histogram mappingí•œ ì¶œë ¥ ì´ë¯¸ì§€
 
-	UCHAR** Input1_data = memory_alloc2D(width, height);  // Input ÀÌ¹ÌÁö1ÀÇ ÇÈ¼¿ °ª ÀúÀå
-	UCHAR** Input2_data = memory_alloc2D(width, height);  // Input ÀÌ¹ÌÁö2ÀÇ ÇÈ¼¿ °ª ÀúÀå
-	UCHAR** Output_data = memory_alloc2D(width, height);  // histogram mappingÇÑ ÇÈ¼¿ °ªÀ» ÀúÀå
+	UCHAR** Input1_data = memory_alloc2D(width, height);  // Input ì´ë¯¸ì§€1ì˜ í”½ì…€ ê°’ ì €ì¥
+	UCHAR** Input2_data = memory_alloc2D(width, height);  // Input ì´ë¯¸ì§€2ì˜ í”½ì…€ ê°’ ì €ì¥
+	UCHAR** Output_data = memory_alloc2D(width, height);  // histogram mappingí•œ í”½ì…€ ê°’ì„ ì €ì¥
 	
 
 
 	int sum = 0;
 
-	if (!Input1_file || !Input2_file) {	// ÆÄÀÏÀÌ ÇØ´ç °æ·Î¿¡ ¾ø´Â °æ¿ì
+	if (!Input1_file || !Input2_file) {	// íŒŒì¼ì´ í•´ë‹¹ ê²½ë¡œì— ì—†ëŠ” ê²½ìš°
 		printf("Can not open file.");
 		return -1;
 	}
 
-	// ÀÌ¹ÌÁö¸¦ ÀĞ¾î¿Í ¹à±â °ª ÇÏ³ªÇÏ³ª¸¦ ÀúÀå
+	// ì´ë¯¸ì§€ë¥¼ ì½ì–´ì™€ ë°ê¸° ê°’ í•˜ë‚˜í•˜ë‚˜ë¥¼ ì €ì¥
 	fread(&Input1_data[0][0], sizeof(UCHAR), width * height, Input1_file);
 	fread(&Input2_data[0][0], sizeof(UCHAR), width * height, Input2_file);
 
 
-	// ÀÌ¹ÌÁö1 È÷½ºÅä±×·¥ ±¸ÇÏ±â
+	// ì´ë¯¸ì§€1 íˆìŠ¤í† ê·¸ë¨ êµ¬í•˜ê¸°
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			int data = Input1_data[i][j];
-			Image1_Histogram[data] += 1;	// ÇØ´ç ¹à±â °ªÀÇ ºóµµ ¼ö Ä«¿îÆ®
+			Image1_Histogram[data] += 1;	// í•´ë‹¹ ë°ê¸° ê°’ì˜ ë¹ˆë„ ìˆ˜ ì¹´ìš´íŠ¸
 		}
 	}
-	DrawHistogram(Image1_Histogram, 30, 400); // ÀÌ¹ÌÁö1ÀÇ È÷½ºÅä±×·¥ Ãâ·Â
-	// ÀÌ¹ÌÁö1 CDF ±¸ÇÏ±â = Histogram Equalization
+	DrawHistogram(Image1_Histogram, 30, 400); // ì´ë¯¸ì§€1ì˜ íˆìŠ¤í† ê·¸ë¨ ì¶œë ¥
+	// ì´ë¯¸ì§€1 CDF êµ¬í•˜ê¸° = Histogram Equalization
 	sum = 0;
 	for (int i = 0; i < 256; i++) {
 		sum += (int)Image1_Histogram[i];
-		Image1_CDF[i] = (float)sum / (width * height);	// ÀüÃ¼ Å©±â·Î ³ª´²¼­ È®·ü ±¸ÇÏ±â
+		Image1_CDF[i] = (float)sum / (width * height);	// ì „ì²´ í¬ê¸°ë¡œ ë‚˜ëˆ ì„œ í™•ë¥  êµ¬í•˜ê¸°
 	}
-	DrawCDF(Image1_CDF, 30, 400);	// ÀÌ¹ÌÁö1ÀÇ CDF Ãâ·Â
+	DrawCDF(Image1_CDF, 30, 400);	// ì´ë¯¸ì§€1ì˜ CDF ì¶œë ¥
 
 
-	// ÀÌ¹ÌÁö2 È÷½ºÅä±×·¥ ±¸ÇÏ±â
+	// ì´ë¯¸ì§€2 íˆìŠ¤í† ê·¸ë¨ êµ¬í•˜ê¸°
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
 			int data = Input2_data[i][j];
-			Image2_Histogram[data] += 1;	// ÇØ´ç ¹à±â °ªÀÇ ºóµµ ¼ö Ä«¿îÆ®
+			Image2_Histogram[data] += 1;	// í•´ë‹¹ ë°ê¸° ê°’ì˜ ë¹ˆë„ ìˆ˜ ì¹´ìš´íŠ¸
 		}
 	}
-	DrawHistogram(Image2_Histogram, 400, 400); // ÀÌ¹ÌÁö2ÀÇ È÷½ºÅä±×·¥ Ãâ·Â
-	// ÀÌ¹ÌÁö2 CDF ±¸ÇÏ±â = Histogram Equalization
+	DrawHistogram(Image2_Histogram, 400, 400); // ì´ë¯¸ì§€2ì˜ íˆìŠ¤í† ê·¸ë¨ ì¶œë ¥
+	// ì´ë¯¸ì§€2 CDF êµ¬í•˜ê¸° = Histogram Equalization
 	sum = 0;
 	for (int i = 0; i < 256; i++) {
 		sum += (int)Image2_Histogram[i];
-		Image2_CDF[i] = (float)sum / (width * height);	// ÀüÃ¼ Å©±â·Î ³ª´²¼­ È®·ü ±¸ÇÏ±â
+		Image2_CDF[i] = (float)sum / (width * height);	// ì „ì²´ í¬ê¸°ë¡œ ë‚˜ëˆ ì„œ í™•ë¥  êµ¬í•˜ê¸°
 	}
-	DrawCDF(Image2_CDF, 400, 400);	// ÀÌ¹ÌÁö2ÀÇ CDF Ãâ·Â
+	DrawCDF(Image2_CDF, 400, 400);	// ì´ë¯¸ì§€2ì˜ CDF ì¶œë ¥
 
 
 
 	// Histogram mapping
 	for (int j = 0; j < 256; j++) {
-		float p = Image1_CDF[j];  // ÀÌ¹ÌÁö1ÀÇ CDF
-		// ÀÌ¹ÌÁö1ÀÇ CDF¸¦ ÀÌ¹ÌÁö2ÀÇ CDFÀÇ ¿ªÇÔ¼ö¿¡ ³ÖÀ½À¸·Î½á Histogram mapping
+		float p = Image1_CDF[j];  // ì´ë¯¸ì§€1ì˜ CDF
+		// ì´ë¯¸ì§€1ì˜ CDFë¥¼ ì´ë¯¸ì§€2ì˜ CDFì˜ ì—­í•¨ìˆ˜ì— ë„£ìŒìœ¼ë¡œì¨ Histogram mapping
 		int inverse_value = inverse_normal_cdf(p, Image2_CDF, 0.00001); // 0~255
 
 		for (int k = 0; k < Image1_Histogram[j]; k++) {
-			Image_mapping_Histogram[inverse_value] += 1;  // ÇØ´ç °ªÀÇ ºóµµ ¼ö Ä«¿îÆÃ
+			Image_mapping_Histogram[inverse_value] += 1;  // í•´ë‹¹ ê°’ì˜ ë¹ˆë„ ìˆ˜ ì¹´ìš´íŒ…
 		}
 	}
-	DrawHistogram(Image_mapping_Histogram, 800, 400);	// histogram mappingÇÑ È÷½ºÅä±×·¥ Ãâ·Â
+	DrawHistogram(Image_mapping_Histogram, 800, 400);	// histogram mappingí•œ íˆìŠ¤í† ê·¸ë¨ ì¶œë ¥
 	//for (int i = 0; i < 256; i++) {
 	//	printf("[%d]: %f\n", i, Image_mapping_Histogram[i]);
 	//}
 
-	// histogram mappingÇÑ CDF ±¸ÇÏ±â
+	// histogram mappingí•œ CDF êµ¬í•˜ê¸°
 	sum = 0;
 	for (int i = 0; i < 256; i++) {
-		sum += (int)Image_mapping_Histogram[i];	// °ªÀ» ´©Àû
-		Image_mapping_CDF[i] = (float)sum / (width * height); // ÀüÃ¼ Å©±â·Î ³ª´²¼­ È®·ü ±¸ÇÏ±â
+		sum += (int)Image_mapping_Histogram[i];	// ê°’ì„ ëˆ„ì 
+		Image_mapping_CDF[i] = (float)sum / (width * height); // ì „ì²´ í¬ê¸°ë¡œ ë‚˜ëˆ ì„œ í™•ë¥  êµ¬í•˜ê¸°
 		//printf("[%d]: %f\n", i, Image_mapping_CDF[i]);
 	}
-	DrawCDF(Image_mapping_CDF, 800, 400); // histogram mappingÇÑ CDF Ãâ·Â
+	DrawCDF(Image_mapping_CDF, 800, 400); // histogram mappingí•œ CDF ì¶œë ¥
 
 
 
-	// histogram mappingÇÑ ÀÌ¹ÌÁö Ãâ·ÂÆÄÀÏ ÇÈ¼¿ °ª ¼³Á¤
+	// histogram mappingí•œ ì´ë¯¸ì§€ ì¶œë ¥íŒŒì¼ í”½ì…€ ê°’ ì„¤ì •
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
-			int brightness = Input1_data[i][j];	// ÀÌ¹ÌÁö1ÀÇ ÇÑ ÇÈ¼¿ÀÇ ¹à±â °ª(r)
-			float cdf = Image1_CDF[brightness]; // rÀÇ cdf°ª = T(r)
-			Output_data[i][j] = inverse_normal_cdf(cdf, Image2_CDF, 0.00001); // histogram mappingÇÑ z (0~255)
+			int brightness = Input1_data[i][j];	// ì´ë¯¸ì§€1ì˜ í•œ í”½ì…€ì˜ ë°ê¸° ê°’(r)
+			float cdf = Image1_CDF[brightness]; // rì˜ cdfê°’ = T(r)
+			Output_data[i][j] = inverse_normal_cdf(cdf, Image2_CDF, 0.00001); // histogram mappingí•œ z (0~255)
 		}
 	}
 
-	// Output_dataÀÇ µ¥ÀÌÅÍ·Î Output_fileÀ» »ı¼º
+	// Output_dataì˜ ë°ì´í„°ë¡œ Output_fileì„ ìƒì„±
 	fwrite(&Output_data[0][0], sizeof(UCHAR), width * height, Output_file);
 
 
 
-	MemoryClear(Input1_data); // ¸Ş¸ğ¸® ÇØÁ¦
+	MemoryClear(Input1_data); // ë©”ëª¨ë¦¬ í•´ì œ
 	MemoryClear(Input2_data);
 	MemoryClear(Output_data);
-	fclose(Input1_file);	// ÆÄÀÏ close
+	fclose(Input1_file);	// íŒŒì¼ close
 	fclose(Input2_file);
 	fclose(Output_file);
 
@@ -143,7 +143,7 @@ int main(void)
 
 
 
-// ¸Ş¸ğ¸®¸¦ ÇØÁ¦ÇÏ´Â ÇÔ¼ö
+// ë©”ëª¨ë¦¬ë¥¼ í•´ì œí•˜ëŠ” í•¨ìˆ˜
 void MemoryClear(UCHAR** buf) {
 	if (buf) {
 		free(buf[0]);
@@ -152,7 +152,7 @@ void MemoryClear(UCHAR** buf) {
 	}
 }
 
-// 2Â÷¿ø ¹è¿­¿¡ µ¿Àû ¸Ş¸ğ¸®¸¦ ÇÒ´çÇÏ´Â ÇÔ¼ö
+// 2ì°¨ì› ë°°ì—´ì— ë™ì  ë©”ëª¨ë¦¬ë¥¼ í• ë‹¹í•˜ëŠ” í•¨ìˆ˜
 UCHAR** memory_alloc2D(int width, int height)
 {
 	UCHAR** ppMem2D = 0;
@@ -177,33 +177,33 @@ UCHAR** memory_alloc2D(int width, int height)
 	return ppMem2D;
 }
 
-// ¿ªÇÔ¼ö
+// ì—­í•¨ìˆ˜
 float inverse_normal_cdf(float p, float cdf[256], float tolerance = 0.1)
 {
-	//// Ç¥ÁØÁ¤±ÔºĞÆ÷°¡ ¾Æ´Ñ °æ¿ì
+	//// í‘œì¤€ì •ê·œë¶„í¬ê°€ ì•„ë‹Œ ê²½ìš°
 	//if (mu != 0 || sigma != 1) {
 	//	return mu + sigma * inverse_normal_cdf(p, 0, 1, tolerance = tolerance);
 	//}
 
-	float low_x = 0.0, low_p = 0.0;   // cdf(0)´Â 0¿¡ ±ÙÁ¢
-	float hi_x = 255.0, hi_p = 1.0;	  // cdf(255)´Â 1¿¡ ±ÙÁ¢
+	float low_x = 0.0, low_p = 0.0;   // cdf(0)ëŠ” 0ì— ê·¼ì ‘
+	float hi_x = 255.0, hi_p = 1.0;	  // cdf(255)ëŠ” 1ì— ê·¼ì ‘
 	float mid_x = 0.0, mid_p = 0.0;
 	float before_mid_p = 0.0;
 
-	while (hi_x - low_x > tolerance)	// ÇØ´ç p¸¦ Ã£À» ¶§±îÁö ¹İº¹
+	while (hi_x - low_x > tolerance)	// í•´ë‹¹ pë¥¼ ì°¾ì„ ë•Œê¹Œì§€ ë°˜ë³µ
 	{
-		mid_x = (low_x + hi_x) / 2; // Áß°£ °ª °è»ê
-		//mid_p = normal_cdf(mid_x, mu, sigma); // Áß°£ °ªÀÇ cdf °ªÀ» °è»ê
+		mid_x = (low_x + hi_x) / 2; // ì¤‘ê°„ ê°’ ê³„ì‚°
+		//mid_p = normal_cdf(mid_x, mu, sigma); // ì¤‘ê°„ ê°’ì˜ cdf ê°’ì„ ê³„ì‚°
 		mid_p = cdf[(int)mid_x];
-		if (mid_p < p) {  // mid_p°¡ Ã£´Â °ªº¸´Ù ÀÛÀ¸¸é ´õ Å« °ª¿¡¼­ Å½»ö
+		if (mid_p < p) {  // mid_pê°€ ì°¾ëŠ” ê°’ë³´ë‹¤ ì‘ìœ¼ë©´ ë” í° ê°’ì—ì„œ íƒìƒ‰
 			low_x = mid_x;
 			low_p = mid_p;
 		}
-		else if (mid_p > p) { // mid_p°¡ Ã£´Â °ªº¸´Ù Å©¸é ´õ ÀÛÀº °ª¿¡¼­ Å½»ö
+		else if (mid_p > p) { // mid_pê°€ ì°¾ëŠ” ê°’ë³´ë‹¤ í¬ë©´ ë” ì‘ì€ ê°’ì—ì„œ íƒìƒ‰
 			hi_x = mid_x;
 			hi_p = mid_p;
 		}
-		else {	// p °ªÀ» Ã£À¸¸é break
+		else {	// p ê°’ì„ ì°¾ìœ¼ë©´ break
 			break;
 		}
 
@@ -211,10 +211,10 @@ float inverse_normal_cdf(float p, float cdf[256], float tolerance = 0.1)
 			break;
 		before_mid_p = mid_p;
 	}
-	return (int)mid_x;	// normal_cdf °ªÀÌ pÀÎ x ¹İÈ¯
+	return (int)mid_x;	// normal_cdf ê°’ì´ pì¸ x ë°˜í™˜
 }
 
-// CDF¸¦ ±×¸®´Â ÇÔ¼ö
+// CDFë¥¼ ê·¸ë¦¬ëŠ” í•¨ìˆ˜
 void DrawCDF(float cdf[256], int x_origin, int y_origin) {
 	for (int CurX = 0; CurX < 256; CurX++) {
 		for (int CurY = 0; CurY < cdf[CurX]; CurY++) {
@@ -224,7 +224,7 @@ void DrawCDF(float cdf[256], int x_origin, int y_origin) {
 	}
 }
 
-// HistogramÀ» Ãâ·ÂÇÏ´Â ÇÔ¼ö
+// Histogramì„ ì¶œë ¥í•˜ëŠ” í•¨ìˆ˜
 void DrawHistogram(float histogram[256], int x_origin, int y_origin) {
 	MoveToEx(hdc, x_origin, y_origin, 0);
 	LineTo(hdc, x_origin + 255, y_origin);
